@@ -194,6 +194,7 @@ xhr2.onload = function()
 		var win = Titanium.UI.createWindow({
             imsi:imsi,
             keys:keys,
+            username:username,
 			url:'menu.js',
 			title:'Friend-List'
 		});

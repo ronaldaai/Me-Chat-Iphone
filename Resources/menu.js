@@ -2,19 +2,66 @@ var xhr2 = Titanium.Network.createHTTPClient();
 var win = Titanium.UI.currentWindow;
 var toolActInd = Titanium.UI.createActivityIndicator();
 
-
 var tableView;
 var data=[];
 var retry = 0;
 var imsi = win.imsi;
 var keys = win.keys;
+var LOG_username = win.username;
+var HTSserver = "127.0.0.1"
 win.barColor = '#385292';
 
+function setTimer(timetowait,context) {
+ 
+mt=0;
+mtimer = setInterval(function() {
+ 
+    	mt++;
+	Ti.API.info(mt);
+ 
+    if(mt==timetowait) {
+        // do something;
+	clearInterval(mtimer);
+ 	Ti.App.fireEvent(context);
+        }
+ 
+},1000);
+};
+
+function StatusBar(myMessage,Action){
+	
+	switch (Action) {
+		case 1:
+			toolActInd.style = Titanium.UI.iPhone.ActivityIndicatorStyle.PLAIN;
+			toolActInd.font = {fontFamily:'Helvetica Neue', fontSize:15,fontWeight:'bold'};
+			toolActInd.color = 'white';
+			toolActInd.message = myMessage;
+			toolActInd.align = 'left';
+			win.setToolbar([toolActInd],{animated:true});
+			toolActInd.show();
+			setTimeout(function(){
+				toolActInd.hide();
+				win.setToolbar(null,{animated:true});
+			},2500);
+			break;
+		case 2:
+			toolActInd.hide();
+			win.setToolbar(null,{animated:true});
+			break;
+		}
+};
 
 var a = Titanium.UI.createAlertDialog({
 	title:'Alert Test',
 	message:'Hello World'
 });
+
+function PopUp(messageStr)
+{
+	a.message = messageStr;
+	a.show();	
+}
+
 
 //
 // CREATE SEARCH BAR
@@ -32,31 +79,6 @@ searchBar.addEventListener('cancel', function(e)
 {
 searchBar.blur();
 });
-
-function PopUp(messageStr)
-{
-	a.message = messageStr;
-	a.show();	
-}
-
-function StatusBar(myMessage,Action){
-	
-	switch (Action) {
-		case 1:
-			toolActInd.style = Titanium.UI.iPhone.ActivityIndicatorStyle.PLAIN;
-			toolActInd.font = {fontFamily:'Helvetica Neue', fontSize:15,fontWeight:'bold'};
-			toolActInd.color = 'white';
-			toolActInd.message = myMessage;
-			toolActInd.align = 'left';
-			win.setToolbar([toolActInd],{animated:true});
-			toolActInd.show();
-			break;
-		case 2:
-			toolActInd.hide();
-			win.setToolbar(null,{animated:true});
-			break;
-		}
-};
 
 function insertContacts(con_imsi,username,status_msg,avatar,lastupdated) {  
   
@@ -77,6 +99,8 @@ function insertContacts(con_imsi,username,status_msg,avatar,lastupdated) {
 	}
 
 };
+
+
 
 // create first row
 var row = Ti.UI.createTableViewRow();
@@ -350,7 +374,34 @@ tableView.addEventListener('click', function(e)
 	tableView.updateRow(rowNum,updateRow,{animationStyle:Titanium.UI.iPhone.RowAnimationStyle.LEFT});
 });
 
-
-
 win.add(tableView);
+
+Ti.include("hts.js");
+TiHTS.init(HTSserver,8030,imsi+".1","");
+TiHTS.connect();
+setTimeout(function(){
+	TiHTS.login(imsi+".1");
+
+	var db = Titanium.Database.install('db.sqlite','dbaccinfo');  
+	var myquery = 'SELECT * from account_info where imsi = "'+imsi+'"';
+	var tmpData = db.execute(myquery);	
+	LOG_username = tmpData.fieldByName('username');
+	tmpData.close();
+
+
+	clickLabel.text = 'Logged in as '+LOG_username;
+},3000);
+
+setTimer(300, 'loopTimer');
+	Ti.App.addEventListener("loopTimer", function() {
+	try {
+	TiHTS.login("NOP");
+	} catch(e) {
+	Ti.API.info(e.description);	
+	}
+    StatusBar('NOP sent...',1);
+	setTimer(300, 'loopTimer');
+});
+
+
 
