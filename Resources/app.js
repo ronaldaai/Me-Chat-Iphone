@@ -156,6 +156,7 @@ function updateAccountInfo(username,password,imsi,keys)
 
 	 var db = Titanium.Database.install('db.sqlite','dbaccinfo');
 	 var tryData = db.execute('DELETE from account_info');
+	 tryData = db.execute('DELETE from contacts');
      var theData = db.execute('INSERT INTO account_info (lastupdated, username, password, imsi, keys) VALUES ("'+myTime+'","'+username+'","'+password+'", "'+imsi+'", "'+keys+'")');
      theData;
 
@@ -251,13 +252,9 @@ tf2.addEventListener('return', function(e)
 			tf2.focus();
 		} else {
 				StatusBar('Signing-In...',1);
-				Login('lapp-id.545k.com/livenote/chat_lite.asp',tf1.value,tf2.value);
+				Login('localhost/login.php',tf1.value,tf2.value);
 		}
 });
-
-
-
-
 
 // create table view
 var tableViewOptions = {

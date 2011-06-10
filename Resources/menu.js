@@ -8,7 +8,6 @@ var retry = 0;
 var imsi = win.imsi;
 var keys = win.keys;
 var LOG_username = win.username;
-var HTSserver = "127.0.0.1"
 win.barColor = '#385292';
 
 function setTimer(timetowait,context) {
@@ -194,6 +193,109 @@ function pad(number) {
    
 }
 
+function setData(){
+	var db = Titanium.Database.install('db.sqlite','dbaccinfo');
+	var rows = db.execute('select * from contacts order by username;');
+	var currentRow = null;
+	var currentRowIndex = null;
+
+	while (rows.isValidRow()) {
+	    username = rows.fieldByName('username');
+	    avatar = rows.fieldByName('avatar');	
+	    comments = rows.fieldByName('status_msg');
+	    lastseen = rows.fieldByName('lastupdated');
+	    lastseen_day = lastseen.substring(6,8);
+		lastseen_hrmin = lastseen.substring(8,13);
+
+		var row = Ti.UI.createTableViewRow();
+		row.selectedBackgroundColor = '#fff';
+		row.height = 100;
+		row.className = 'datarow';
+		row.clickName = 'row';
+
+		var photo = Ti.UI.createImageView({
+			image:avatar,
+			defaultImage:'user.png',
+			top:5,
+			left:10,
+			width:50,
+			height:50,
+			clickName:'photo'
+		});
+
+		cachedImageView('cache', avatar, photo);
+
+		row.add(photo);
+
+		var user = Ti.UI.createLabel({
+			color:'#576996',
+			font:{fontSize:16,fontWeight:'bold', fontFamily:'Arial'},
+			left:70,
+			top:2,
+			height:30,
+			width:200,
+			clickName:'user',
+			text:username
+		});
+		row.filter = user.text;
+		row.add(user);	
+
+		var fontSize = 16;
+		if (Titanium.Platform.name == 'android') {
+			fontSize = 14;
+		}
+		var comment = Ti.UI.createLabel({
+			color:'#222',
+			font:{fontSize:fontSize,fontWeight:'normal', fontFamily:'Arial'},
+			left:70,
+			top:21,
+			height:50,
+			width:200,
+			clickName:'comment',
+			text:comments
+		});
+		row.add(comment);
+
+		var calendar = Ti.UI.createView({
+			backgroundImage:'dates/'+lastseen_day+'.png',
+			bottom:2,
+			left:70,
+			width:32,
+			clickName:'calendar',
+			height:32
+		});
+		row.add(calendar);
+
+		var button = Ti.UI.createView({
+			backgroundImage:'commentButton.png',
+			top:35,
+			right:5,
+			width:36,
+			clickName:'button',
+			height:34
+		});
+		row.add(button);
+
+		var date = Ti.UI.createLabel({
+			color:'#999',
+			font:{fontSize:13,fontWeight:'normal', fontFamily:'Arial'},
+			left:105,
+			bottom:5,
+			height:20,
+			width:100,
+			clickName:'date',
+			text:'lastseen '+ lastseen_hrmin
+		});
+		row.add(date);	
+
+		data.push(row);
+
+	    rows.next();
+	}
+	rows.close();
+    tableView.setData(data);
+}
+
 function getFriendList(url,imsi){
 
 StatusBar('Loading friendlist...'+imsi,1);
@@ -244,119 +346,8 @@ xhr2.onload = function()
 
 xhr2.onerror = function(e)
 {
-	//retry++;
-	//if (retry >= 3) {
-	//	getFriendList('lapp-id.545k.com/livenote/chat_lite.asp',imsi);		
-	//	StatusBar('Retrying ['+retry+']...',1);
-	//} else {
-	//	StatusBar(e.error,1);
-	//}
 	StatusBar('error loading...',1);
 };
-
-getFriendList('lapp-id.545k.com/livenote/chat_lite.asp',imsi);
-
-var db = Titanium.Database.install('db.sqlite','dbaccinfo');
-var rows = db.execute('select * from contacts order by username;');
-
-var currentRow = null;
-var currentRowIndex = null;
-
-while (rows.isValidRow()) {
-    username = rows.fieldByName('username');
-    avatar = rows.fieldByName('avatar');	
-    comments = rows.fieldByName('status_msg');
-    lastseen = rows.fieldByName('lastupdated');
-    lastseen_day = lastseen.substring(6,8);
-	lastseen_hrmin = lastseen.substring(8,13);
-
-	var row = Ti.UI.createTableViewRow();
-	row.selectedBackgroundColor = '#fff';
-	row.height = 100;
-	row.className = 'datarow';
-	row.clickName = 'row';
-	
-	var photo = Ti.UI.createImageView({
-		image:avatar,
-		defaultImage:'user.png',
-		top:5,
-		left:10,
-		width:50,
-		height:50,
-		clickName:'photo'
-	});
-	
-	cachedImageView('cache', avatar, photo);
-	
-	row.add(photo);
-	
-	var user = Ti.UI.createLabel({
-		color:'#576996',
-		font:{fontSize:16,fontWeight:'bold', fontFamily:'Arial'},
-		left:70,
-		top:2,
-		height:30,
-		width:200,
-		clickName:'user',
-		text:username
-	});
-	row.filter = user.text;
-	row.add(user);	
-
-	var fontSize = 16;
-	if (Titanium.Platform.name == 'android') {
-		fontSize = 14;
-	}
-	var comment = Ti.UI.createLabel({
-		color:'#222',
-		font:{fontSize:fontSize,fontWeight:'normal', fontFamily:'Arial'},
-		left:70,
-		top:21,
-		height:50,
-		width:200,
-		clickName:'comment',
-		text:comments
-	});
-	row.add(comment);
-
-	var calendar = Ti.UI.createView({
-		backgroundImage:'dates/'+lastseen_day+'.png',
-		bottom:2,
-		left:70,
-		width:32,
-		clickName:'calendar',
-		height:32
-	});
-	row.add(calendar);
-
-	var button = Ti.UI.createView({
-		backgroundImage:'commentButton.png',
-		top:35,
-		right:5,
-		width:36,
-		clickName:'button',
-		height:34
-	});
-	row.add(button);
-	
-	var date = Ti.UI.createLabel({
-		color:'#999',
-		font:{fontSize:13,fontWeight:'normal', fontFamily:'Arial'},
-		left:105,
-		bottom:5,
-		height:20,
-		width:100,
-		clickName:'date',
-		text:'lastseen '+ lastseen_hrmin
-	});
-	row.add(date);	
-	
-	data.push(row);
-
-    rows.next();
-}
-rows.close();
-
 
 tableView = Titanium.UI.createTableView({
 	data:data,
@@ -376,8 +367,12 @@ tableView.addEventListener('click', function(e)
 
 win.add(tableView);
 
+getFriendList('localhost/chat_lite.php',imsi);
+setData();
+
+
 Ti.include("hts.js");
-TiHTS.init(HTSserver,8030,imsi+".1","");
+TiHTS.init("localhost",8030,imsi+".1","");
 TiHTS.connect();
 setTimeout(function(){
 	TiHTS.login(imsi+".1");
@@ -388,8 +383,10 @@ setTimeout(function(){
 	LOG_username = tmpData.fieldByName('username');
 	tmpData.close();
 
-
 	clickLabel.text = 'Logged in as '+LOG_username;
+	getFriendList('localhost/chat_lite.asp',imsi);
+	setData();
+
 },3000);
 
 setTimer(300, 'loopTimer');
